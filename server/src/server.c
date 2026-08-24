@@ -52,6 +52,7 @@ int server_init(server_t *srv)
         return (perror("fcntl"), -1);
     if (map_init(srv) == -1)
         return (perror("map_init"), -1);
+    srv->next_refill_us = now_us() + units_to_us(srv, REFILL_UNITS);
     return 0;
 }
 
@@ -90,16 +91,16 @@ int server_run(server_t *srv)
 
     while (1) {
         nfds = build_pollfds(srv, pfds, map);
-        /* TODO: calculer le timeout = temps avant le prochain événement de jeu.
-        ** Pour l'instant -1 = on dort jusqu'à activité réseau. */
-        ready = poll(pfds, nfds, -1);
+        /* On dort jusqu'au prochain événement : réseau OU jeu. */
+        ready = poll(pfds, nfds, server_timeout_ms(srv));
         if (ready == -1) {
             if (errno == EINTR)
                 continue;
             return (perror("poll"), -1);
         }
-        /* TODO: ici, exécuter les événements de jeu arrivés à échéance
-        ** (fin d'un Forward, d'une Incantation, respawn ressources, faim...). */
+        /* Événements de jeu arrivés à échéance (pour l'instant : le respawn
+        ** des ressources ; plus tard la faim et la fin des actions). */
+        server_tick(srv);
         for (int i = 0; i < nfds; i++) {
             if (pfds[i].fd == srv->listen_fd && (pfds[i].revents & POLLIN)) {
                 accept_client(srv);

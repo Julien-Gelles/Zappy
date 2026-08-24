@@ -60,14 +60,22 @@ static void place_one(server_t *srv, int res)
     map_at(srv, x, y)->qty[res]++;
 }
 
-/* Complete la carte jusqu'a la quantite visee, ressource par ressource. */
-void map_spawn_resources(server_t *srv)
+/*
+** Complete la carte jusqu'a la quantite visee, ressource par ressource.
+** Retourne le nombre total d'unites ajoutees : 0 signifie que rien n'a
+** bouge, ce qui permet a l'appelant de ne prevenir les GUI que si besoin.
+*/
+int map_spawn_resources(server_t *srv)
 {
     int missing;
+    int added = 0;
 
     for (int res = 0; res < NB_RESOURCES; res++) {
         missing = map_target_qty(srv, res) - count_resource(srv, res);
         for (int i = 0; i < missing; i++)
             place_one(srv, res);
+        if (missing > 0)
+            added += missing;
     }
+    return added;
 }

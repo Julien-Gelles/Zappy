@@ -37,6 +37,18 @@ void gui_send_mct(server_t *srv, client_t *c)
             gui_send_bct(srv, c, x, y);
 }
 
+/*
+** Renvoie l'etat de la carte a TOUS les GUI connectes.
+** Utilise apres une reapparition de ressources, pour qu'ils se remettent
+** a jour sans avoir a redemander.
+*/
+void gui_broadcast_mct(server_t *srv)
+{
+    for (int i = 0; i < MAX_CLIENTS; i++)
+        if (srv->clients[i].fd != -1 && srv->clients[i].state == STATE_GUI)
+            gui_send_mct(srv, &srv->clients[i]);
+}
+
 /* bct X Y : on refuse les coordonnees hors carte (le GUI ne doit pas deviner). */
 static void gui_bct(server_t *srv, client_t *c, const char *line)
 {
@@ -53,16 +65,19 @@ static void gui_bct(server_t *srv, client_t *c, const char *line)
 
 void gui_command(server_t *srv, client_t *c, const char *line)
 {
-    char msz[64];
+    char buf[64];
 
     if (strcmp(line, "msz") == 0) {
-        snprintf(msz, sizeof(msz), "msz %d %d\n", srv->width, srv->height);
-        queue_output(c, msz);
+        snprintf(buf, sizeof(buf), "msz %d %d\n", srv->width, srv->height);
+        queue_output(c, buf);
+    } else if (strcmp(line, "sgt") == 0) {
+        snprintf(buf, sizeof(buf), "sgt %d\n", srv->freq);
+        queue_output(c, buf);
     } else if (strcmp(line, "mct") == 0)
         gui_send_mct(srv, c);
     else if (strncmp(line, "bct", 3) == 0)
         gui_bct(srv, c, line);
     else
         queue_output(c, "suc\n");
-    /* TODO: tna (equipes), sgt/sst (time unit), ppo/plv/pin (joueurs). */
+    /* TODO: sst (changer l'unite de temps), tna (equipes), ppo/plv/pin. */
 }
