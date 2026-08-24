@@ -4,7 +4,9 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "server.h"
 
 static void usage(const char *bin)
@@ -13,8 +15,8 @@ static void usage(const char *bin)
         "USAGE: %s -p port -x width -y height -n name1 name2 ... "
         "-c clientsNb -f freq\n"
         "\t-p port\t\tport number\n"
-        "\t-x width\tworld width\n"
-        "\t-y height\tworld height\n"
+        "\t-x width\tworld width (defaut 20)\n"
+        "\t-y height\tworld height (defaut 20)\n"
         "\t-n names\tteam names (au moins une)\n"
         "\t-c clientsNb\tnb of clients per team\n"
         "\t-f freq\t\treciprocal of time unit (defaut 100)\n",
@@ -26,6 +28,7 @@ int main(int argc, char **argv)
     server_t srv;
 
     memset(&srv, 0, sizeof(srv));
+    srand(time(NULL));
     if (argc == 2 && strcmp(argv[1], "--help") == 0) {
         usage(argv[0]);
         return 0;

@@ -34,7 +34,10 @@ static int parse_teams(server_t *srv, int argc, char **argv, int *i)
 
 int parse_args(server_t *srv, int argc, char **argv)
 {
-    srv->freq = 100; /* valeur par défaut du sujet */
+    /* Valeurs par défaut : utilisées si l'option n'est pas passée. */
+    srv->freq = 100;
+    srv->width = 20;
+    srv->height = 20;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-p") == 0 && i + 1 < argc)
             srv->port = atoi(argv[++i]);

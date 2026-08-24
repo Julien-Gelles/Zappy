@@ -50,7 +50,8 @@ int server_init(server_t *srv)
         return (perror("listen"), -1);
     if (set_nonblocking(srv->listen_fd) == -1)
         return (perror("fcntl"), -1);
-    /* TODO: allouer la carte (width*height) et générer les ressources ici. */
+    if (map_init(srv) == -1)
+        return (perror("map_init"), -1);
     return 0;
 }
 
@@ -127,4 +128,5 @@ void server_cleanup(server_t *srv)
     }
     free(srv->team_names);
     free(srv->team_used);
+    map_destroy(srv);
 }
