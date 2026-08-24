@@ -56,10 +56,18 @@ server/include/server.h   structures (server_t, client_t) et prototypes
 server/src/main.c         point d'entrée, orchestration
 server/src/args.c         parsing des arguments -p -x -y -n -c -f
 server/src/server.c       socket d'écoute + boucle poll()
-server/src/client.c       accept, buffering, handshake, aiguillage
+server/src/client.c       accept, buffering, aiguillage des lignes
+server/src/handshake.c    nom d'équipe -> GUI ou drone
 server/src/map.c          carte torique : allocation et accès aux cases
 server/src/map_resources.c  densités et dispersion des 7 ressources
-server/src/gui.c          commandes GUI liées à la carte (msz, bct, mct)
+server/src/clock.c        horloge du jeu, timeout du poll(), événements dus
+server/src/action.c       file des commandes en attente et leur coût
+server/src/commands.c     exécution : Forward, Right, Left, Connect_nbr
+server/src/cmd_look.c     Look : le cône de vision
+server/src/cmd_inventory.c  Inventory, Take, Set
+server/src/player.c       naissance d'un drone, messages pnw/ppo/pin
+server/src/gui.c          commandes GUI de la carte (msz, sgt, bct, mct)
+server/src/gui_query.c    requêtes GUI sur un joueur (ppo, plv, pin)
 
 ai/src/main.c             stub du client IA (à implémenter)
 gui/src/main.cpp          stub du client GUI (à implémenter)
@@ -77,7 +85,11 @@ Fait :
 - [x] bufferisation entrée/sortie par client, découpage des lignes
 - [x] handshake IA et GUI (`WELCOME` → nom d'équipe → `ok`/`ko`)
 - [x] carte torique + génération des ressources aux densités du sujet
-- [x] commandes GUI de la carte : `msz`, `bct X Y`, `mct`
+- [x] horloge de jeu (`action / f`) et réapparition toutes les 20 unités
+- [x] commandes IA : `Forward`, `Right`, `Left`, `Look`, `Inventory`,
+      `Take`, `Set`, `Connect_nbr`, avec leur coût en temps
+- [x] commandes GUI : `msz`, `sgt`, `bct X Y`, `mct`, `ppo/plv/pin #n`
+- [x] événements GUI : `pnw`, `ppo`, `pin`, `pgt`, `pdr`, `pdi`
 
 Les densités ont été relevées sur le serveur de référence, en comparant
 les totaux de `mct` sur plusieurs tailles de carte. La quantité visée est
@@ -93,14 +105,30 @@ les totaux de `mct` sur plusieurs tailles de carte. La quantité visée est
 | phiras    | 0.08    | 10        |
 | thystame  | 0.05    | 6         |
 
+Le coût des commandes et le repère de la carte ont été relevés de la même
+façon, en chronométrant le serveur de référence :
+
+| Commande | Coût (unités de temps) |
+| -------- | ---------------------- |
+| `Forward`, `Right`, `Left` | 7 |
+| `Look`, `Take`, `Set`      | 7 |
+| `Inventory`                | 1 |
+| `Connect_nbr`              | 0 (immédiat) |
+
+Orientations : `1` = Nord (`y-1`), `2` = Est (`x+1`), `3` = Sud (`y+1`),
+`4` = Ouest (`x-1`). Le `Look` liste la case du joueur, puis chaque rangée
+de gauche à droite. Un joueur ne peut avoir que **10 commandes en
+attente** ; les suivantes sont ignorées.
+
+Un écart assumé avec la référence : nos drones démarrent avec **10**
+unités de nourriture (valeur du sujet), là où le serveur de référence en
+affiche 9.
+
 Reste à implémenter :
 
-- [ ] horloge de jeu (`action / f`) et réapparition des ressources
-- [ ] reconnaissance des commandes IA (`Forward`, `Right`, `Left`,
-      `Look`, `Inventory`, `Connect_nbr`, `Take`, `Set`, `Broadcast`,
-      `Eject`, `Fork`, `Incantation`)
+- [ ] commandes IA restantes (`Broadcast`, `Eject`, `Fork`, `Incantation`)
 - [ ] timer de faim et mort des joueurs
-- [ ] reste du protocole GUI (`tna`, `pnw`, `ppo`, `pdi`, `pin`...)
+- [ ] reste du protocole GUI (`tna`, `sst`, `enw`/`ebo`, `pic`, `seg`...)
 - [ ] client `zappy_ai`
 - [ ] client `zappy_gui`
 

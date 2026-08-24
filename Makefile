@@ -13,10 +13,17 @@ SERVER_SRC = server/src/main.c \
              server/src/args.c \
              server/src/server.c \
              server/src/client.c \
+             server/src/handshake.c \
              server/src/map.c \
              server/src/map_resources.c \
              server/src/clock.c \
-             server/src/gui.c
+             server/src/action.c \
+             server/src/commands.c \
+             server/src/cmd_look.c \
+             server/src/cmd_inventory.c \
+             server/src/player.c \
+             server/src/gui.c \
+             server/src/gui_query.c
 SERVER_OBJ = $(SERVER_SRC:.c=.o)
 
 AI_SRC  = ai/src/main.c

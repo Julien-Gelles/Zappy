@@ -23,6 +23,19 @@
     #define REFILL_UNITS  20   /* les ressources reapparaissent tous les 20 */
 
 /*
+** Cout en unites de temps de chaque commande (releve sur le serveur de
+** reference). Connect_nbr et les commandes inconnues repondent tout de suite.
+*/
+    #define COST_MOVE       7  /* Forward, Right, Left */
+    #define COST_LOOK       7
+    #define COST_INVENTORY  1
+    #define COST_OBJECT     7  /* Take, Set */
+
+    #define MAX_PENDING   10   /* commandes en attente par joueur, au maximum */
+    #define ACTION_MAX    256  /* longueur maximale d'une commande stockee */
+    #define START_FOOD    50   /* unites de nourriture au depart */
+
+/*
 ** Les 7 ressources du jeu, dans l'ordre impose par le protocole GUI
 ** (bct X Y q0 q1 q2 q3 q4 q5 q6). Cet ordre ne doit pas changer.
 */
@@ -43,6 +56,16 @@ typedef enum {
 typedef struct tile_s {
     int qty[NB_RESOURCES];
 } tile_t;
+
+/*
+** Une commande en attente d'execution.
+** Les commandes coutent du temps : elles ne sont pas jouees a la reception
+** mais mises en file, et executees quand leur echeance arrive.
+*/
+typedef struct action_s {
+    char     cmd[ACTION_MAX];
+    uint64_t end_us;
+} action_t;
 
 /*
 ** Etat d'un client dans le handshake / le jeu.
@@ -74,12 +97,21 @@ typedef struct client_s {
     char           *write_buf;
     size_t          write_len;
 
-    /* --- A COMPLETER PLUS TARD (données de jeu) --- */
-    /* int x, y;                */
-    /* int orientation;         */ /* 1=N 2=E 3=S 4=O */
-    /* int level;               */
-    /* int inventory[7];        */
-    /* long food_timer;         */
+    /* --- données de jeu (uniquement pour un client STATE_AI) --- */
+    int             id;          /* numéro montré aux GUI : #0, #1, ... */
+    int             team_idx;    /* indice dans srv->team_names */
+    int             x;
+    int             y;
+    int             orientation; /* 1=N 2=E 3=S 4=O */
+    int             level;
+    int             inventory[NB_RESOURCES];
+
+    /* file des commandes en attente (la plus proche en premier) */
+    action_t        actions[MAX_PENDING];
+    int             nb_actions;
+
+    /* --- A COMPLETER PLUS TARD --- */
+    /* uint64_t food_end_us;  */ /* échéance de la prochaine digestion */
 } client_t;
 
 /*
@@ -114,6 +146,8 @@ typedef struct server_s {
     ** sur l'horloge monotone. C'est elle qui fixe le timeout du poll().
     */
     uint64_t    next_refill_us;
+
+    int         next_player_id;  /* compteur pour attribuer les #n aux GUI */
 } server_t;
 
 /* args.c ------------------------------------------------------------------- */
@@ -132,6 +166,9 @@ int  flush_output(client_t *c);
 int  queue_output(client_t *c, const char *msg);
 void process_line(server_t *srv, client_t *c, char *line);
 
+/* handshake.c -------------------------------------------------------------- */
+void handle_team_name(server_t *srv, client_t *c, const char *name);
+
 /* map.c -------------------------------------------------------------------- */
 int     map_wrap(int value, int max);
 tile_t *map_at(server_t *srv, int x, int y);
@@ -139,8 +176,32 @@ int     map_init(server_t *srv);
 void    map_destroy(server_t *srv);
 
 /* map_resources.c ---------------------------------------------------------- */
-int  map_target_qty(server_t *srv, int res);
-int  map_spawn_resources(server_t *srv);
+int         map_target_qty(server_t *srv, int res);
+int         map_spawn_resources(server_t *srv);
+const char *resource_name(int res);
+
+/* action.c ----------------------------------------------------------------- */
+void     action_enqueue(server_t *srv, client_t *c, const char *line);
+void     client_run_actions(server_t *srv, client_t *c, uint64_t now);
+uint64_t client_next_deadline(client_t *c);
+
+/* commands.c --------------------------------------------------------------- */
+void ai_execute(server_t *srv, client_t *c, const char *line);
+
+/* cmd_look.c --------------------------------------------------------------- */
+void cmd_look(server_t *srv, client_t *c);
+
+/* cmd_inventory.c ---------------------------------------------------------- */
+void cmd_inventory(server_t *srv, client_t *c);
+void cmd_take(server_t *srv, client_t *c, const char *name);
+void cmd_set(server_t *srv, client_t *c, const char *name);
+
+/* player.c ----------------------------------------------------------------- */
+void player_spawn(server_t *srv, client_t *c);
+void gui_broadcast(server_t *srv, const char *msg);
+void gui_notify_pnw(server_t *srv, client_t *c);
+void gui_notify_ppo(server_t *srv, client_t *c);
+void gui_notify_pin(server_t *srv, client_t *c);
 
 /* clock.c ------------------------------------------------------------------ */
 uint64_t now_us(void);
@@ -153,5 +214,8 @@ void gui_send_bct(server_t *srv, client_t *c, int x, int y);
 void gui_send_mct(server_t *srv, client_t *c);
 void gui_broadcast_mct(server_t *srv);
 void gui_command(server_t *srv, client_t *c, const char *line);
+
+/* gui_query.c -------------------------------------------------------------- */
+void gui_query(server_t *srv, client_t *c, const char *line);
 
 #endif /* SERVER_H */
