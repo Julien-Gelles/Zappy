@@ -40,6 +40,20 @@ int map_target_qty(server_t *srv, int res)
     return (srv->width * srv->height * DENSITY_PCT[res] + 50) / 100;
 }
 
+/*
+** Nom d'une ressource, tel qu'il apparait dans le protocole
+** (Look, Take, Set). L'ordre suit celui de l'enum resource_t.
+*/
+const char *resource_name(int res)
+{
+    static const char *names[NB_RESOURCES] = {
+        "food", "linemate", "deraumere", "sibur",
+        "mendiane", "phiras", "thystame"
+    };
+
+    return names[res];
+}
+
 /* Compte les unites d'une ressource actuellement presentes sur la carte. */
 static int count_resource(server_t *srv, int res)
 {

@@ -49,15 +49,33 @@ uint64_t units_to_us(server_t *srv, int units)
 ** On arrondit vers le HAUT pour ne pas se reveiller juste avant l'echeance
 ** et repartir aussitot pour rien.
 */
+/*
+** L'echeance la plus proche parmi tous les evenements a venir : la
+** reapparition des ressources et la fin de la commande en cours de
+** chaque joueur.
+*/
+static uint64_t earliest_deadline(server_t *srv)
+{
+    uint64_t next = srv->next_refill_us;
+    uint64_t d;
+
+    /* TODO: y ajouter l'echeance du compteur de faim de chaque joueur. */
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        d = client_next_deadline(&srv->clients[i]);
+        if (d != 0 && d < next)
+            next = d;
+    }
+    return next;
+}
+
 int server_timeout_ms(server_t *srv)
 {
     uint64_t now = now_us();
+    uint64_t next = earliest_deadline(srv);
 
-    /* TODO: quand les joueurs existeront, prendre aussi le minimum avec la
-    ** fin de leur action en cours et l'echeance de leur compteur de faim. */
-    if (srv->next_refill_us <= now)
+    if (next <= now)
         return 0;
-    return (int)((srv->next_refill_us - now + 999) / 1000);
+    return (int)((next - now + 999) / 1000);
 }
 
 /*
@@ -71,6 +89,9 @@ void server_tick(server_t *srv)
 {
     uint64_t now = now_us();
 
+    for (int i = 0; i < MAX_CLIENTS; i++)
+        if (srv->clients[i].fd != -1 && srv->clients[i].state == STATE_AI)
+            client_run_actions(srv, &srv->clients[i], now);
     if (now < srv->next_refill_us)
         return;
     if (map_spawn_resources(srv) > 0)

@@ -77,7 +77,9 @@ void gui_command(server_t *srv, client_t *c, const char *line)
         gui_send_mct(srv, c);
     else if (strncmp(line, "bct", 3) == 0)
         gui_bct(srv, c, line);
+    else if (line[0] == 'p')
+        gui_query(srv, c, line);
     else
         queue_output(c, "suc\n");
-    /* TODO: sst (changer l'unite de temps), tna (equipes), ppo/plv/pin. */
+    /* TODO: sst (changer l'unite de temps), tna (equipes). */
 }

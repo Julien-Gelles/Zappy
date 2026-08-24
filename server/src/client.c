@@ -44,14 +44,20 @@ int accept_client(server_t *srv)
 
 void remove_client(server_t *srv, client_t *c)
 {
-    (void)srv;
+    char line[32];
+
+    if (c->state == STATE_AI) {
+        /* La place se libère dans l'équipe, et les GUI doivent l'apprendre. */
+        srv->team_used[c->team_idx]--;
+        snprintf(line, sizeof(line), "pdi #%d\n", c->id);
+        gui_broadcast(srv, line);
+    }
     if (c->fd != -1)
         close(c->fd);
     free(c->write_buf);
     free(c->team_name);
     memset(c, 0, sizeof(*c));
     c->fd = -1;
-    /* TODO: prévenir les GUI de la déconnexion (pdi #n) si c'était une IA. */
 }
 
 /* Ajoute msg à la file de sortie (agrandie dynamiquement). */
@@ -84,45 +90,6 @@ int flush_output(client_t *c)
 }
 
 /*
-** Handshake : le premier message d'un client est son nom d'équipe.
-** GRAPHIC -> client graphique. Sinon -> IA rejoignant une équipe.
-*/
-static void handle_team_name(server_t *srv, client_t *c, const char *name)
-{
-    char line[64];
-
-    if (strcmp(name, GRAPHIC_TEAM) == 0) {
-        c->state = STATE_GUI;
-        /* Le serveur pousse l'état initial sans qu'on le lui demande. */
-        snprintf(line, sizeof(line), "msz %d %d\n", srv->width, srv->height);
-        queue_output(c, line);
-        snprintf(line, sizeof(line), "sgt %d\n", srv->freq);
-        queue_output(c, line);
-        gui_send_mct(srv, c);
-        /* TODO: envoyer aussi tna (équipes) et la liste des joueurs. */
-        return;
-    }
-    for (int t = 0; t < srv->nb_teams; t++) {
-        if (strcmp(name, srv->team_names[t]) == 0
-            && srv->team_used[t] < srv->clients_nb) {
-            srv->team_used[t]++;
-            c->state = STATE_AI;
-            c->team_name = strdup(name);
-            /* Réponse du handshake : CLIENT-NUM puis "X Y". */
-            snprintf(line, sizeof(line), "%d\n",
-                srv->clients_nb - srv->team_used[t]);
-            queue_output(c, line);
-            snprintf(line, sizeof(line), "%d %d\n", srv->width, srv->height);
-            queue_output(c, line);
-            /* TODO: placer le joueur, prévenir les GUI (pnw #n ...). */
-            return;
-        }
-    }
-    /* Équipe inconnue ou pleine. */
-    queue_output(c, "ko\n");
-}
-
-/*
 ** Traite UNE ligne complète (sans le '\n').
 ** Selon l'état du client, c'est soit le nom d'équipe, soit une commande.
 */
@@ -136,13 +103,9 @@ void process_line(server_t *srv, client_t *c, char *line)
         gui_command(srv, c, line);
         return;
     }
-    /* STATE_AI : une commande de drone.
-    ** TODO: reconnaître Forward / Right / Left / Look / Inventory /
-    ** Broadcast / Fork / Eject / Take / Set / Incantation / Connect_nbr.
-    ** Les mettre dans une file d'actions avec un temps d'exécution (action/f).
-    ** Pour l'instant on répond "ko" à tout (commande inconnue). */
-    (void)line;
-    queue_output(c, "ko\n");
+    /* STATE_AI : une commande de drone. On ne l'exécute pas maintenant :
+    ** elle coûte du temps, donc elle part en file d'attente. */
+    action_enqueue(srv, c, line);
 }
 
 /*
