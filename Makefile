@@ -21,6 +21,7 @@ SERVER_SRC = server/src/main.c \
              server/src/commands.c \
              server/src/cmd_look.c \
              server/src/cmd_inventory.c \
+             server/src/hunger.c \
              server/src/player.c \
              server/src/gui.c \
              server/src/gui_query.c

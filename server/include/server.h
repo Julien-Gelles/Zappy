@@ -36,6 +36,15 @@
     #define START_FOOD    50   /* unites de nourriture au depart */
 
 /*
+** Toutes les FOOD_UNITS unites de temps, un drone digere une nourriture.
+** S'il n'en a plus au moment de la digestion, il meurt : sa duree de vie
+** est donc de (nourriture + 1) * FOOD_UNITS unites.
+** Valeur verifiee sur le serveur de reference : un drone avec 9 nourritures
+** affichees vit exactement 1260 unites, soit 10 * 126.
+*/
+    #define FOOD_UNITS    126
+
+/*
 ** Les 7 ressources du jeu, dans l'ordre impose par le protocole GUI
 ** (bct X Y q0 q1 q2 q3 q4 q5 q6). Cet ordre ne doit pas changer.
 */
@@ -110,8 +119,8 @@ typedef struct client_s {
     action_t        actions[MAX_PENDING];
     int             nb_actions;
 
-    /* --- A COMPLETER PLUS TARD --- */
-    /* uint64_t food_end_us;  */ /* échéance de la prochaine digestion */
+    /* échéance de la prochaine digestion : c'est l'horloge de la faim */
+    uint64_t        food_end_us;
 } client_t;
 
 /*
@@ -187,6 +196,10 @@ uint64_t client_next_deadline(client_t *c);
 
 /* commands.c --------------------------------------------------------------- */
 void ai_execute(server_t *srv, client_t *c, const char *line);
+
+/* hunger.c ----------------------------------------------------------------- */
+void     tick_players(server_t *srv, uint64_t now);
+uint64_t client_food_deadline(client_t *c);
 
 /* cmd_look.c --------------------------------------------------------------- */
 void cmd_look(server_t *srv, client_t *c);
