@@ -65,6 +65,7 @@ server/src/action.c       file des commandes en attente et leur coût
 server/src/commands.c     exécution : Forward, Right, Left, Connect_nbr
 server/src/cmd_look.c     Look : le cône de vision
 server/src/cmd_inventory.c  Inventory, Take, Set
+server/src/hunger.c       digestion, mort de faim, tick des drones
 server/src/player.c       naissance d'un drone, messages pnw/ppo/pin
 server/src/gui.c          commandes GUI de la carte (msz, sgt, bct, mct)
 server/src/gui_query.c    requêtes GUI sur un joueur (ppo, plv, pin)
@@ -90,6 +91,7 @@ Fait :
       `Take`, `Set`, `Connect_nbr`, avec leur coût en temps
 - [x] commandes GUI : `msz`, `sgt`, `bct X Y`, `mct`, `ppo/plv/pin #n`
 - [x] événements GUI : `pnw`, `ppo`, `pin`, `pgt`, `pdr`, `pdi`
+- [x] faim : digestion toutes les 126 unités, mort et libération de la place
 
 Les densités ont été relevées sur le serveur de référence, en comparant
 les totaux de `mct` sur plusieurs tailles de carte. La quantité visée est
@@ -120,14 +122,23 @@ Orientations : `1` = Nord (`y-1`), `2` = Est (`x+1`), `3` = Sud (`y+1`),
 de gauche à droite. Un joueur ne peut avoir que **10 commandes en
 attente** ; les suivantes sont ignorées.
 
-Un écart assumé avec la référence : nos drones démarrent avec **10**
-unités de nourriture (valeur du sujet), là où le serveur de référence en
-affiche 9.
+### La faim
+
+Un drone digère une unité de nourriture toutes les **126 unités de
+temps**. Quand l'échéance arrive et que son sac est vide, il meurt : il
+reçoit `dead`, sa connexion est fermée, les GUI reçoivent `pdi #n` et sa
+place se libère dans l'équipe.
+
+Sa durée de vie est donc `(nourriture + 1) × 126` unités — les 126
+unités de la dernière digestion, celle qui échoue, comptent aussi. La
+constante de 126 a été mesurée sur le serveur de référence, dont les
+drones vivent exactement 1260 unités avec 9 nourritures.
+
+`START_FOOD` (dans `server.h`) fixe la réserve de départ.
 
 Reste à implémenter :
 
 - [ ] commandes IA restantes (`Broadcast`, `Eject`, `Fork`, `Incantation`)
-- [ ] timer de faim et mort des joueurs
 - [ ] reste du protocole GUI (`tna`, `sst`, `enw`/`ebo`, `pic`, `seg`...)
 - [ ] client `zappy_ai`
 - [ ] client `zappy_gui`

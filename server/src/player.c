@@ -66,6 +66,7 @@ void player_spawn(server_t *srv, client_t *c)
     c->level = 1;
     memset(c->inventory, 0, sizeof(c->inventory));
     c->inventory[RES_FOOD] = START_FOOD;
+    c->food_end_us = now_us() + units_to_us(srv, FOOD_UNITS);
     gui_notify_pnw(srv, c);
     gui_notify_pin(srv, c);
 }

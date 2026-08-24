@@ -59,9 +59,11 @@ static uint64_t earliest_deadline(server_t *srv)
     uint64_t next = srv->next_refill_us;
     uint64_t d;
 
-    /* TODO: y ajouter l'echeance du compteur de faim de chaque joueur. */
     for (int i = 0; i < MAX_CLIENTS; i++) {
         d = client_next_deadline(&srv->clients[i]);
+        if (d != 0 && d < next)
+            next = d;
+        d = client_food_deadline(&srv->clients[i]);
         if (d != 0 && d < next)
             next = d;
     }
@@ -89,9 +91,7 @@ void server_tick(server_t *srv)
 {
     uint64_t now = now_us();
 
-    for (int i = 0; i < MAX_CLIENTS; i++)
-        if (srv->clients[i].fd != -1 && srv->clients[i].state == STATE_AI)
-            client_run_actions(srv, &srv->clients[i], now);
+    tick_players(srv, now);
     if (now < srv->next_refill_us)
         return;
     if (map_spawn_resources(srv) > 0)
