@@ -1,0 +1,20 @@
+# Binaires produits par le Makefile
+/zappy_server
+/zappy_ai
+/zappy_gui
+
+# Docs d'aide
+/docs
+
+# Fichiers objets
+*.o
+
+# Editeurs / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Binaires de reference (fournis par l'ecole, pas notre code)
+/zappy_ref-v3.0.1/
