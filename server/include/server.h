@@ -8,11 +8,19 @@
 
     #include <poll.h>
     #include <stddef.h>
+    #include <stdint.h>
 
     #define MAX_CLIENTS   1024
     #define READ_CHUNK    4096
     #define GRAPHIC_TEAM  "GRAPHIC"
     #define NB_RESOURCES  7
+
+/*
+** Le temps du jeu se compte en "unites de temps".
+** Une unite dure 1/f seconde : plus f est grand, plus le jeu va vite.
+** Une action qui coute 7 unites prend donc 7/f seconde.
+*/
+    #define REFILL_UNITS  20   /* les ressources reapparaissent tous les 20 */
 
 /*
 ** Les 7 ressources du jeu, dans l'ordre impose par le protocole GUI
@@ -101,8 +109,11 @@ typedef struct server_s {
     */
     tile_t     *map;
 
-    /* --- A COMPLETER PLUS TARD --- */
-    /* long time_unit;   */
+    /*
+    ** Echeance de la prochaine reapparition des ressources, en microsecondes
+    ** sur l'horloge monotone. C'est elle qui fixe le timeout du poll().
+    */
+    uint64_t    next_refill_us;
 } server_t;
 
 /* args.c ------------------------------------------------------------------- */
@@ -129,11 +140,18 @@ void    map_destroy(server_t *srv);
 
 /* map_resources.c ---------------------------------------------------------- */
 int  map_target_qty(server_t *srv, int res);
-void map_spawn_resources(server_t *srv);
+int  map_spawn_resources(server_t *srv);
+
+/* clock.c ------------------------------------------------------------------ */
+uint64_t now_us(void);
+uint64_t units_to_us(server_t *srv, int units);
+int      server_timeout_ms(server_t *srv);
+void     server_tick(server_t *srv);
 
 /* gui.c -------------------------------------------------------------------- */
 void gui_send_bct(server_t *srv, client_t *c, int x, int y);
 void gui_send_mct(server_t *srv, client_t *c);
+void gui_broadcast_mct(server_t *srv);
 void gui_command(server_t *srv, client_t *c, const char *line);
 
 #endif /* SERVER_H */

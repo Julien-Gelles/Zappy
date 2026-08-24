@@ -15,6 +15,7 @@ SERVER_SRC = server/src/main.c \
              server/src/client.c \
              server/src/map.c \
              server/src/map_resources.c \
+             server/src/clock.c \
              server/src/gui.c
 SERVER_OBJ = $(SERVER_SRC:.c=.o)
 

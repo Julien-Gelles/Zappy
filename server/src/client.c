@@ -96,8 +96,10 @@ static void handle_team_name(server_t *srv, client_t *c, const char *name)
         /* Le serveur pousse l'état initial sans qu'on le lui demande. */
         snprintf(line, sizeof(line), "msz %d %d\n", srv->width, srv->height);
         queue_output(c, line);
+        snprintf(line, sizeof(line), "sgt %d\n", srv->freq);
+        queue_output(c, line);
         gui_send_mct(srv, c);
-        /* TODO: envoyer aussi sgt (time unit), tna (équipes), les joueurs. */
+        /* TODO: envoyer aussi tna (équipes) et la liste des joueurs. */
         return;
     }
     for (int t = 0; t < srv->nb_teams; t++) {
