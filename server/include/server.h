@@ -12,6 +12,29 @@
     #define MAX_CLIENTS   1024
     #define READ_CHUNK    4096
     #define GRAPHIC_TEAM  "GRAPHIC"
+    #define NB_RESOURCES  7
+
+/*
+** Les 7 ressources du jeu, dans l'ordre impose par le protocole GUI
+** (bct X Y q0 q1 q2 q3 q4 q5 q6). Cet ordre ne doit pas changer.
+*/
+typedef enum {
+    RES_FOOD = 0,
+    RES_LINEMATE,
+    RES_DERAUMERE,
+    RES_SIBUR,
+    RES_MENDIANE,
+    RES_PHIRAS,
+    RES_THYSTAME
+} resource_t;
+
+/*
+** Une case de la carte : combien d'unites de chaque ressource s'y trouvent.
+** Une case peut contenir plusieurs ressources en meme temps.
+*/
+typedef struct tile_s {
+    int qty[NB_RESOURCES];
+} tile_t;
 
 /*
 ** Etat d'un client dans le handshake / le jeu.
@@ -72,8 +95,13 @@ typedef struct server_s {
     /* clients connectés */
     client_t    clients[MAX_CLIENTS];
 
+    /*
+    ** La carte : un tableau a plat de width*height cases.
+    ** La case (x, y) est a l'indice y * width + x -> voir map_at().
+    */
+    tile_t     *map;
+
     /* --- A COMPLETER PLUS TARD --- */
-    /* tile_t **map;     */ /* carte width*height, ressources par case */
     /* long time_unit;   */
 } server_t;
 
@@ -92,5 +120,20 @@ int  handle_client_read(server_t *srv, client_t *c);
 int  flush_output(client_t *c);
 int  queue_output(client_t *c, const char *msg);
 void process_line(server_t *srv, client_t *c, char *line);
+
+/* map.c -------------------------------------------------------------------- */
+int     map_wrap(int value, int max);
+tile_t *map_at(server_t *srv, int x, int y);
+int     map_init(server_t *srv);
+void    map_destroy(server_t *srv);
+
+/* map_resources.c ---------------------------------------------------------- */
+int  map_target_qty(server_t *srv, int res);
+void map_spawn_resources(server_t *srv);
+
+/* gui.c -------------------------------------------------------------------- */
+void gui_send_bct(server_t *srv, client_t *c, int x, int y);
+void gui_send_mct(server_t *srv, client_t *c);
+void gui_command(server_t *srv, client_t *c, const char *line);
 
 #endif /* SERVER_H */

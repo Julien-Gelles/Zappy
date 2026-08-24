@@ -35,8 +35,8 @@ make re     # fclean + all
 | Option | Signification                                 |
 | ------ | --------------------------------------------- |
 | `-p`   | port d'écoute                                 |
-| `-x`   | largeur de la carte                           |
-| `-y`   | hauteur de la carte                           |
+| `-x`   | largeur de la carte (défaut 20)               |
+| `-y`   | hauteur de la carte (défaut 20)               |
 | `-n`   | noms d'équipes (un ou plusieurs)              |
 | `-c`   | nombre de clients (drones) par équipe         |
 | `-f`   | fréquence de jeu, inverse de l'unité de temps |
@@ -57,6 +57,9 @@ server/src/main.c         point d'entrée, orchestration
 server/src/args.c         parsing des arguments -p -x -y -n -c -f
 server/src/server.c       socket d'écoute + boucle poll()
 server/src/client.c       accept, buffering, handshake, aiguillage
+server/src/map.c          carte torique : allocation et accès aux cases
+server/src/map_resources.c  densités et dispersion des 7 ressources
+server/src/gui.c          commandes GUI liées à la carte (msz, bct, mct)
 
 ai/src/main.c             stub du client IA (à implémenter)
 gui/src/main.cpp          stub du client GUI (à implémenter)
@@ -68,18 +71,36 @@ zappy_ref-v3.0.1/         binaires de référence fournis par l'école,
 
 ## État d'avancement
 
-Le squelette réseau du serveur est fonctionnel : accepte les
-connexions, gère le handshake (`WELCOME` → nom d'équipe → `ok`/`ko`),
-bufferise les entrées/sorties en non-bloquant via `poll()`.
+Fait :
+
+- [x] parsing des arguments, socket non bloquante, boucle `poll()`
+- [x] bufferisation entrée/sortie par client, découpage des lignes
+- [x] handshake IA et GUI (`WELCOME` → nom d'équipe → `ok`/`ko`)
+- [x] carte torique + génération des ressources aux densités du sujet
+- [x] commandes GUI de la carte : `msz`, `bct X Y`, `mct`
+
+Les densités ont été relevées sur le serveur de référence, en comparant
+les totaux de `mct` sur plusieurs tailles de carte. La quantité visée est
+`width * height * densité`, arrondie à l'entier le plus proche :
+
+| Ressource | Densité | 121 cases |
+| --------- | ------- | --------- |
+| food      | 0.50    | 61        |
+| linemate  | 0.30    | 36        |
+| deraumere | 0.15    | 18        |
+| sibur     | 0.10    | 12        |
+| mendiane  | 0.10    | 12        |
+| phiras    | 0.08    | 10        |
+| thystame  | 0.05    | 6         |
 
 Reste à implémenter :
 
+- [ ] horloge de jeu (`action / f`) et réapparition des ressources
 - [ ] reconnaissance des commandes IA (`Forward`, `Right`, `Left`,
       `Look`, `Inventory`, `Connect_nbr`, `Take`, `Set`, `Broadcast`,
       `Eject`, `Fork`, `Incantation`)
-- [ ] génération de la carte et des ressources (avec repop dans le temps)
 - [ ] timer de faim et mort des joueurs
-- [ ] notification des GUI (`pnw`, `ppo`, `pdi`, `pin`...)
+- [ ] reste du protocole GUI (`tna`, `pnw`, `ppo`, `pdi`, `pin`...)
 - [ ] client `zappy_ai`
 - [ ] client `zappy_gui`
 

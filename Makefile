@@ -12,7 +12,10 @@ CXXFLAGS  = -Wall -Wextra -std=c++17
 SERVER_SRC = server/src/main.c \
              server/src/args.c \
              server/src/server.c \
-             server/src/client.c
+             server/src/client.c \
+             server/src/map.c \
+             server/src/map_resources.c \
+             server/src/gui.c
 SERVER_OBJ = $(SERVER_SRC:.c=.o)
 
 AI_SRC  = ai/src/main.c

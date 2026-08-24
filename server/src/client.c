@@ -93,9 +93,11 @@ static void handle_team_name(server_t *srv, client_t *c, const char *name)
 
     if (strcmp(name, GRAPHIC_TEAM) == 0) {
         c->state = STATE_GUI;
-        /* TODO: envoyer msz, sgt, mct, tna, et l'état courant (voir protocole). */
+        /* Le serveur pousse l'état initial sans qu'on le lui demande. */
         snprintf(line, sizeof(line), "msz %d %d\n", srv->width, srv->height);
         queue_output(c, line);
+        gui_send_mct(srv, c);
+        /* TODO: envoyer aussi sgt (time unit), tna (équipes), les joueurs. */
         return;
     }
     for (int t = 0; t < srv->nb_teams; t++) {
@@ -129,7 +131,7 @@ void process_line(server_t *srv, client_t *c, char *line)
         return;
     }
     if (c->state == STATE_GUI) {
-        /* TODO: commandes GUI (msz, bct, mct, tna, ppo, plv, pin, sgt...). */
+        gui_command(srv, c, line);
         return;
     }
     /* STATE_AI : une commande de drone.
