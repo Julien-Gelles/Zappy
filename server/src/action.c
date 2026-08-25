@@ -77,6 +77,9 @@ void client_run_actions(server_t *srv, client_t *c, uint64_t now)
 {
     char cmd[ACTION_MAX];
 
+    /* Un drone en pleine incantation est fige : ses commandes attendent. */
+    if (c->incant_end_us != 0)
+        return;
     while (c->nb_actions > 0 && c->actions[0].end_us <= now) {
         memcpy(cmd, c->actions[0].cmd, ACTION_MAX);
         action_pop(c);

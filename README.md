@@ -69,6 +69,9 @@ server/src/direction.c    d'où vient un son ou une poussée (1 à 8)
 server/src/cmd_fork.c     Fork (pondre un œuf) et Eject (pousser)
 server/src/egg.c          les œufs, c'est-à-dire les places d'équipe
 server/src/cmd_inventory.c  Inventory, Take, Set
+server/src/incant_rules.c   conditions d'une élévation (table du sujet)
+server/src/cmd_incant.c   le rituel : début, gel, fin, échec
+server/src/victory.c      montée de niveau et fin de partie
 server/src/hunger.c       digestion, mort de faim, tick des drones
 server/src/player.c       naissance d'un drone, messages pnw/ppo/pin
 server/src/gui.c          commandes GUI de la carte (msz, sgt, bct, mct)
@@ -101,6 +104,8 @@ Fait :
 - [x] `Broadcast` directionnel (`message K, texte`) et `pbc` pour les GUI
 - [x] œufs : `Fork`, `Eject`, `Connect_nbr`, naissance sur l'œuf consommé
 - [x] état complet envoyé à un GUI qui se connecte en cours de partie
+- [x] `Incantation` : conditions, gel des participants, échec sur `Eject`
+- [x] condition de victoire (`seg`) : 6 joueurs d'une équipe au niveau 8
 
 Les densités ont été relevées sur le serveur de référence, en comparant
 les totaux de `mct` sur plusieurs tailles de carte. La quantité visée est
@@ -192,12 +197,53 @@ Deux écarts assumés avec le serveur de référence : il ne détruit pas les
 œufs (on suit ici le sujet), et il répond `ok` même quand il n'y avait
 rien à éjecter (on s'aligne sur lui sur ce point).
 
+### L'incantation
+
+Pour monter d'un niveau, il faut réunir sur **une même case** un certain
+nombre de drones du même niveau et un certain nombre de pierres :
+
+| Élévation | Joueurs | linemate | deraumere | sibur | mendiane | phiras | thystame | Durée | À `f=10` |
+| --------- | ------: | -------: | --------: | ----: | -------: | -----: | -------: | ----: | -------: |
+| 1 → 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 60  | 6 s  |
+| 2 → 3 | 2 | 1 | 1 | 1 | 0 | 0 | 0 | 100 | 10 s |
+| 3 → 4 | 2 | 2 | 0 | 1 | 0 | 2 | 0 | 140 | 14 s |
+| 4 → 5 | 4 | 1 | 1 | 2 | 0 | 1 | 0 | 180 | 18 s |
+| 5 → 6 | 4 | 1 | 2 | 1 | 3 | 0 | 0 | 220 | 22 s |
+| 6 → 7 | 6 | 1 | 2 | 3 | 0 | 1 | 0 | 260 | 26 s |
+| 7 → 8 | 6 | 2 | 2 | 2 | 2 | 2 | 1 | 300 | 30 s |
+
+Deux règles du sujet faciles à manquer :
+
+- **les participants n'ont pas besoin d'être de la même équipe**, seul leur
+  niveau compte : un ennemi présent sur la case monte de niveau avec vous ;
+- les conditions sont vérifiées **au début et à la fin**. Pendant tout le
+  rituel les participants sont **figés** : leurs commandes s'empilent sans
+  s'exécuter. Il suffit qu'un `Eject` chasse l'un d'eux de la case pour que
+  la vérification finale échoue et que tout le monde reçoive `ko` — les
+  pierres, elles, ne sont pas consommées.
+
+**Écart assumé sur la durée.** Le sujet impose 300 unités pour tous les
+paliers ; nous la faisons croître avec le niveau — 60 unités puis 40 de
+plus à chaque palier, ce qui retombe exactement sur les 300 du sujet pour
+le dernier. Les premières élévations deviennent rapides, et la dernière une
+longue cérémonie de 30 s qu'un `Eject` de 0,7 s peut ruiner. La formule
+tient en une ligne (`INCANT_UNITS` dans `server.h`) : la remplacer par
+`300` restaure le comportement du sujet.
+
+Un dernier écart, à l'inverse : le serveur de référence accepte le palier
+2 → 3 **sans sibur**, ce qui contredit sa propre table. Nous suivons le
+sujet.
+
+La partie s'arrête quand une équipe compte **6 joueurs au niveau 8** : les
+GUI reçoivent alors `seg <équipe>`.
+
 Reste à implémenter :
 
-- [ ] `Incantation` et la condition de victoire
-- [ ] reste du protocole GUI (`sst`, `pic`/`pie`, `edi`, `seg`, `smg`)
+- [ ] `sst` (changer l'unité de temps depuis le GUI) et `smg` (message serveur)
 - [ ] client `zappy_ai`
 - [ ] client `zappy_gui`
+
+Le serveur est donc complet côté règles du jeu.
 
 ## Licence
 

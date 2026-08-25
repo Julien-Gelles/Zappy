@@ -26,14 +26,6 @@ static int resource_index(const char *name)
     return -1;
 }
 
-/* Previent tous les GUI que cette case a change. */
-static void gui_notify_tile(server_t *srv, int x, int y)
-{
-    for (int i = 0; i < MAX_CLIENTS; i++)
-        if (srv->clients[i].fd != -1 && srv->clients[i].state == STATE_GUI)
-            gui_send_bct(srv, &srv->clients[i], x, y);
-}
-
 void cmd_inventory(server_t *srv, client_t *c)
 {
     char line[256];
@@ -66,7 +58,7 @@ void cmd_take(server_t *srv, client_t *c, const char *name)
     snprintf(line, sizeof(line), "pgt #%d %d\n", c->id, r);
     gui_broadcast(srv, line);
     gui_notify_pin(srv, c);
-    gui_notify_tile(srv, c->x, c->y);
+    gui_send_tile(srv, c->x, c->y);
 }
 
 /* Depose une unite sur la case courante, si le joueur en porte. */
@@ -86,5 +78,5 @@ void cmd_set(server_t *srv, client_t *c, const char *name)
     snprintf(line, sizeof(line), "pdr #%d %d\n", c->id, r);
     gui_broadcast(srv, line);
     gui_notify_pin(srv, c);
-    gui_notify_tile(srv, c->x, c->y);
+    gui_send_tile(srv, c->x, c->y);
 }

@@ -35,6 +35,20 @@
     #define COST_FORK      42
     #define COST_EJECT      7
 
+/*
+** Duree d'une incantation, en unites de temps.
+** Le sujet impose 300 pour tous les paliers ; on la fait croitre avec le
+** niveau : 60 pour le palier 1->2, puis 40 de plus a chaque palier, ce qui
+** retombe exactement sur 300 pour le dernier (7->8).
+** Les premieres elevations sont ainsi rapides, et les dernieres deviennent
+** de longues ceremonies qu'un Eject adverse peut ruiner.
+** Pour revenir au sujet a la lettre : remplacer par 300.
+*/
+    #define INCANT_UNITS(lvl)  (40 * (lvl) + 20)
+
+    #define MAX_LEVEL      8   /* niveau maximum atteignable */
+    #define WIN_PLAYERS    6   /* joueurs au niveau max pour gagner */
+
     #define MAX_PENDING   10   /* commandes en attente par joueur, au maximum */
     #define ACTION_MAX    256  /* longueur maximale d'une commande stockee */
     #define START_FOOD     5   /* unites de nourriture au depart */
@@ -137,6 +151,18 @@ typedef struct client_s {
 
     /* échéance de la prochaine digestion : c'est l'horloge de la faim */
     uint64_t        food_end_us;
+
+    /*
+    ** Incantation en cours. Tant que incant_end_us n'est pas nul, le drone
+    ** est figé : ses commandes en attente ne s'exécutent pas.
+    ** incant_id identifie le rituel, ce qui permet de retrouver tous ses
+    ** participants — même ceux qu'un Eject aurait chassés de la case.
+    */
+    uint64_t        incant_end_us;
+    int             incant_id;
+    int             incant_leader;  /* 1 pour celui qui l'a lancée */
+    int             incant_x;       /* la case où se tient le rituel */
+    int             incant_y;
 } client_t;
 
 /*
@@ -181,6 +207,8 @@ typedef struct server_s {
     uint64_t    next_refill_us;
 
     int         next_player_id;  /* compteur pour attribuer les #n aux GUI */
+    int         next_incant_id;  /* idem pour identifier les rituels */
+    int         game_over;       /* une équipe a gagné : on ne l'annonce qu'une fois */
 } server_t;
 
 /* args.c ------------------------------------------------------------------- */
@@ -247,6 +275,20 @@ int  eggs_init(server_t *srv);
 /* gui_state.c -------------------------------------------------------------- */
 void gui_send_state(server_t *srv, client_t *c);
 void gui_send_tna(server_t *srv, client_t *c);
+void gui_send_tile(server_t *srv, int x, int y);
+
+/* incant_rules.c ----------------------------------------------------------- */
+int  incant_players(int level);
+int  incant_need(int level, int res);
+int  incant_count(server_t *srv, int x, int y, int level);
+int  incant_ready(server_t *srv, int x, int y, int level);
+
+/* cmd_incant.c ------------------------------------------------------------- */
+void cmd_incantation(server_t *srv, client_t *c);
+void incant_tick(server_t *srv, client_t *c, uint64_t now);
+
+/* victory.c ---------------------------------------------------------------- */
+void player_level_up(server_t *srv, client_t *c);
 
 /* cmd_inventory.c ---------------------------------------------------------- */
 void cmd_inventory(server_t *srv, client_t *c);

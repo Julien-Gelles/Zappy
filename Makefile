@@ -25,6 +25,9 @@ SERVER_SRC = server/src/main.c \
              server/src/cmd_fork.c \
              server/src/egg.c \
              server/src/cmd_inventory.c \
+             server/src/incant_rules.c \
+             server/src/cmd_incant.c \
+             server/src/victory.c \
              server/src/hunger.c \
              server/src/player.c \
              server/src/gui.c \

@@ -12,6 +12,14 @@
 #include <stdio.h>
 #include "server.h"
 
+/* Previent tous les GUI que le contenu d'une case a change. */
+void gui_send_tile(server_t *srv, int x, int y)
+{
+    for (int i = 0; i < MAX_CLIENTS; i++)
+        if (srv->clients[i].fd != -1 && srv->clients[i].state == STATE_GUI)
+            gui_send_bct(srv, &srv->clients[i], x, y);
+}
+
 /* tna : un message par equipe. */
 void gui_send_tna(server_t *srv, client_t *c)
 {

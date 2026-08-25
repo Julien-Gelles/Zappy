@@ -77,6 +77,7 @@ void ai_execute(server_t *srv, client_t *c, const char *line)
         return cmd_fork(srv, c);
     if (strcmp(line, "Eject") == 0)
         return cmd_eject(srv, c);
-    /* TODO: Incantation. */
+    if (strcmp(line, "Incantation") == 0)
+        return cmd_incantation(srv, c);
     queue_output(c, "ko\n");
 }
