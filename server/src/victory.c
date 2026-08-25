@@ -45,6 +45,11 @@ void player_level_up(server_t *srv, client_t *c)
     srv->game_over = 1;
     snprintf(line, sizeof(line), "seg %s\n", srv->team_names[c->team_idx]);
     gui_broadcast(srv, line);
+    /* seg annonce le vainqueur ; smg donne de quoi l'afficher en clair. */
+    snprintf(line, sizeof(line), "team %s wins with %d players at level %d",
+        srv->team_names[c->team_idx], WIN_PLAYERS, MAX_LEVEL);
+    gui_send_smg(srv, line);
     printf("[zappy] l'equipe %s remporte la partie.\n",
         srv->team_names[c->team_idx]);
+    fflush(stdout);
 }

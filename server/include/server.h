@@ -317,4 +317,8 @@ void gui_command(server_t *srv, client_t *c, const char *line);
 /* gui_query.c -------------------------------------------------------------- */
 void gui_query(server_t *srv, client_t *c, const char *line);
 
+/* gui_server.c ------------------------------------------------------------- */
+void gui_set_time(server_t *srv, client_t *c, const char *line);
+void gui_send_smg(server_t *srv, const char *msg);
+
 #endif /* SERVER_H */

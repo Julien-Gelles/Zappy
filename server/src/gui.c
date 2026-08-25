@@ -73,7 +73,9 @@ void gui_command(server_t *srv, client_t *c, const char *line)
     } else if (strcmp(line, "sgt") == 0) {
         snprintf(buf, sizeof(buf), "sgt %d\n", srv->freq);
         queue_output(c, buf);
-    } else if (strcmp(line, "tna") == 0)
+    } else if (strncmp(line, "sst", 3) == 0)
+        gui_set_time(srv, c, line);
+    else if (strcmp(line, "tna") == 0)
         gui_send_tna(srv, c);
     else if (strcmp(line, "mct") == 0)
         gui_send_mct(srv, c);
@@ -83,5 +85,4 @@ void gui_command(server_t *srv, client_t *c, const char *line)
         gui_query(srv, c, line);
     else
         queue_output(c, "suc\n");
-    /* TODO: sst (changer l'unite de temps), tna (equipes). */
 }
