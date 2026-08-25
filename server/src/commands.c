@@ -72,6 +72,8 @@ void ai_execute(server_t *srv, client_t *c, const char *line)
         return cmd_take(srv, c, line + 5);
     if (strncmp(line, "Set ", 4) == 0)
         return cmd_set(srv, c, line + 4);
-    /* TODO: Broadcast, Fork, Eject, Incantation. */
+    if (strncmp(line, "Broadcast ", 10) == 0)
+        return cmd_broadcast(srv, c, line + 10);
+    /* TODO: Fork, Eject, Incantation. */
     queue_output(c, "ko\n");
 }

@@ -30,6 +30,8 @@ static int action_cost(const char *cmd)
         return COST_MOVE;
     if (strncmp(cmd, "Take ", 5) == 0 || strncmp(cmd, "Set ", 4) == 0)
         return COST_OBJECT;
+    if (strncmp(cmd, "Broadcast ", 10) == 0)
+        return COST_BROADCAST;
     return 0;
 }
 
