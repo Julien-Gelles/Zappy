@@ -22,8 +22,7 @@ static int parse_teams(server_t *srv, int argc, char **argv, int *i)
     if (count == 0)
         return -1;
     srv->team_names = calloc(count, sizeof(char *));
-    srv->team_used = calloc(count, sizeof(int));
-    if (!srv->team_names || !srv->team_used)
+    if (!srv->team_names)
         return -1;
     for (int k = 0; k < count; k++)
         srv->team_names[k] = argv[start + k];

@@ -54,14 +54,15 @@ void gui_notify_pin(server_t *srv, client_t *c)
 }
 
 /*
-** Place un nouveau drone : position et orientation au hasard, niveau 1,
-** et de quoi tenir un moment. Puis on previent les GUI.
+** Place un nouveau drone a l'endroit de l'oeuf dont il sort, avec une
+** orientation au hasard, le niveau 1 et de quoi tenir un moment.
+** Puis on previent les GUI.
 */
-void player_spawn(server_t *srv, client_t *c)
+void player_spawn(server_t *srv, client_t *c, int x, int y)
 {
     c->id = srv->next_player_id++;
-    c->x = rand() % srv->width;
-    c->y = rand() % srv->height;
+    c->x = x;
+    c->y = y;
     c->orientation = rand() % 4 + 1;
     c->level = 1;
     memset(c->inventory, 0, sizeof(c->inventory));

@@ -31,6 +31,8 @@
     #define COST_INVENTORY  1
     #define COST_OBJECT     7  /* Take, Set */
     #define COST_BROADCAST  7
+    #define COST_FORK      42
+    #define COST_EJECT      7
 
     #define MAX_PENDING   10   /* commandes en attente par joueur, au maximum */
     #define ACTION_MAX    256  /* longueur maximale d'une commande stockee */
@@ -76,6 +78,18 @@ typedef struct action_s {
     char     cmd[ACTION_MAX];
     uint64_t end_us;
 } action_t;
+
+/*
+** Un oeuf en attente : c'est une PLACE libre dans une equipe.
+** Le prochain client de cette equipe naitra a l'endroit de l'oeuf.
+*/
+typedef struct egg_s {
+    int id;
+    int team_idx;
+    int parent_id;   /* le drone qui l'a pondu, -1 pour les œufs du départ */
+    int x;
+    int y;
+} egg_t;
 
 /*
 ** Etat d'un client dans le handshake / le jeu.
@@ -139,8 +153,16 @@ typedef struct server_s {
 
     /* équipes */
     char      **team_names;
-    int        *team_used;    /* slots occupés par équipe */
     int         nb_teams;
+
+    /*
+    ** Les œufs en attente : ce sont eux qui font les places disponibles.
+    ** Tableau agrandi au besoin, le plus ancien œuf en premier.
+    */
+    egg_t      *eggs;
+    int         nb_eggs;
+    int         cap_eggs;
+    int         next_egg_id;
 
     /* clients connectés */
     client_t    clients[MAX_CLIENTS];
@@ -208,13 +230,30 @@ void cmd_look(server_t *srv, client_t *c);
 /* cmd_broadcast.c ---------------------------------------------------------- */
 void cmd_broadcast(server_t *srv, client_t *c, const char *text);
 
+/* direction.c -------------------------------------------------------------- */
+int  direction_from(server_t *srv, client_t *to, int sx, int sy);
+
+/* cmd_fork.c --------------------------------------------------------------- */
+void cmd_fork(server_t *srv, client_t *c);
+void cmd_eject(server_t *srv, client_t *c);
+
+/* egg.c -------------------------------------------------------------------- */
+int  egg_add(server_t *srv, int team_idx, int parent_id, int x, int y);
+int  egg_count(server_t *srv, int team_idx);
+int  egg_take(server_t *srv, int team_idx, int *x, int *y);
+int  eggs_init(server_t *srv);
+
+/* gui_state.c -------------------------------------------------------------- */
+void gui_send_state(server_t *srv, client_t *c);
+void gui_send_tna(server_t *srv, client_t *c);
+
 /* cmd_inventory.c ---------------------------------------------------------- */
 void cmd_inventory(server_t *srv, client_t *c);
 void cmd_take(server_t *srv, client_t *c, const char *name);
 void cmd_set(server_t *srv, client_t *c, const char *name);
 
 /* player.c ----------------------------------------------------------------- */
-void player_spawn(server_t *srv, client_t *c);
+void player_spawn(server_t *srv, client_t *c, int x, int y);
 void gui_broadcast(server_t *srv, const char *msg);
 void gui_notify_pnw(server_t *srv, client_t *c);
 void gui_notify_ppo(server_t *srv, client_t *c);

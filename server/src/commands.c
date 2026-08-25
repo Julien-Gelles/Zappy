@@ -43,13 +43,12 @@ static void cmd_left(server_t *srv, client_t *c)
     gui_notify_ppo(srv, c);
 }
 
-/* Nombre de places encore libres dans l'equipe du joueur. */
+/* Nombre d'oeufs encore disponibles dans l'equipe du joueur. */
 static void cmd_connect_nbr(server_t *srv, client_t *c)
 {
     char line[32];
 
-    snprintf(line, sizeof(line), "%d\n",
-        srv->clients_nb - srv->team_used[c->team_idx]);
+    snprintf(line, sizeof(line), "%d\n", egg_count(srv, c->team_idx));
     queue_output(c, line);
 }
 
@@ -74,6 +73,10 @@ void ai_execute(server_t *srv, client_t *c, const char *line)
         return cmd_set(srv, c, line + 4);
     if (strncmp(line, "Broadcast ", 10) == 0)
         return cmd_broadcast(srv, c, line + 10);
-    /* TODO: Fork, Eject, Incantation. */
+    if (strcmp(line, "Fork") == 0)
+        return cmd_fork(srv, c);
+    if (strcmp(line, "Eject") == 0)
+        return cmd_eject(srv, c);
+    /* TODO: Incantation. */
     queue_output(c, "ko\n");
 }

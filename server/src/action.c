@@ -32,6 +32,10 @@ static int action_cost(const char *cmd)
         return COST_OBJECT;
     if (strncmp(cmd, "Broadcast ", 10) == 0)
         return COST_BROADCAST;
+    if (strcmp(cmd, "Fork") == 0)
+        return COST_FORK;
+    if (strcmp(cmd, "Eject") == 0)
+        return COST_EJECT;
     return 0;
 }
 

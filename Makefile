@@ -21,11 +21,15 @@ SERVER_SRC = server/src/main.c \
              server/src/commands.c \
              server/src/cmd_look.c \
              server/src/cmd_broadcast.c \
+             server/src/direction.c \
+             server/src/cmd_fork.c \
+             server/src/egg.c \
              server/src/cmd_inventory.c \
              server/src/hunger.c \
              server/src/player.c \
              server/src/gui.c \
-             server/src/gui_query.c
+             server/src/gui_query.c \
+             server/src/gui_state.c
 SERVER_OBJ = $(SERVER_SRC:.c=.o)
 
 AI_SRC  = ai/src/main.c
