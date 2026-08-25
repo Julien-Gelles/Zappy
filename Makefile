@@ -20,6 +20,7 @@ SERVER_SRC = server/src/main.c \
              server/src/action.c \
              server/src/commands.c \
              server/src/cmd_look.c \
+             server/src/cmd_broadcast.c \
              server/src/cmd_inventory.c \
              server/src/hunger.c \
              server/src/player.c \

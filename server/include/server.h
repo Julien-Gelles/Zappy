@@ -30,6 +30,7 @@
     #define COST_LOOK       7
     #define COST_INVENTORY  1
     #define COST_OBJECT     7  /* Take, Set */
+    #define COST_BROADCAST  7
 
     #define MAX_PENDING   10   /* commandes en attente par joueur, au maximum */
     #define ACTION_MAX    256  /* longueur maximale d'une commande stockee */
@@ -203,6 +204,9 @@ uint64_t client_food_deadline(client_t *c);
 
 /* cmd_look.c --------------------------------------------------------------- */
 void cmd_look(server_t *srv, client_t *c);
+
+/* cmd_broadcast.c ---------------------------------------------------------- */
+void cmd_broadcast(server_t *srv, client_t *c, const char *text);
 
 /* cmd_inventory.c ---------------------------------------------------------- */
 void cmd_inventory(server_t *srv, client_t *c);

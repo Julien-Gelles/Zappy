@@ -64,6 +64,7 @@ server/src/clock.c        horloge du jeu, timeout du poll(), événements dus
 server/src/action.c       file des commandes en attente et leur coût
 server/src/commands.c     exécution : Forward, Right, Left, Connect_nbr
 server/src/cmd_look.c     Look : le cône de vision
+server/src/cmd_broadcast.c  Broadcast : le son et sa direction
 server/src/cmd_inventory.c  Inventory, Take, Set
 server/src/hunger.c       digestion, mort de faim, tick des drones
 server/src/player.c       naissance d'un drone, messages pnw/ppo/pin
@@ -92,6 +93,7 @@ Fait :
 - [x] commandes GUI : `msz`, `sgt`, `bct X Y`, `mct`, `ppo/plv/pin #n`
 - [x] événements GUI : `pnw`, `ppo`, `pin`, `pgt`, `pdr`, `pdi`
 - [x] faim : digestion toutes les 126 unités, mort et libération de la place
+- [x] `Broadcast` directionnel (`message K, texte`) et `pbc` pour les GUI
 
 Les densités ont été relevées sur le serveur de référence, en comparant
 les totaux de `mct` sur plusieurs tailles de carte. La quantité visée est
@@ -110,12 +112,12 @@ les totaux de `mct` sur plusieurs tailles de carte. La quantité visée est
 Le coût des commandes et le repère de la carte ont été relevés de la même
 façon, en chronométrant le serveur de référence :
 
-| Commande | Coût (unités de temps) |
-| -------- | ---------------------- |
-| `Forward`, `Right`, `Left` | 7 |
-| `Look`, `Take`, `Set`      | 7 |
-| `Inventory`                | 1 |
-| `Connect_nbr`              | 0 (immédiat) |
+| Commande                   | Coût (unités de temps) |
+| -------------------------- | ---------------------- |
+| `Forward`, `Right`, `Left` | 7                      |
+| `Look`, `Take`, `Set`      | 7                      |
+| `Inventory`                | 1                      |
+| `Connect_nbr`              | 0 (immédiat)           |
 
 Orientations : `1` = Nord (`y-1`), `2` = Est (`x+1`), `3` = Sud (`y+1`),
 `4` = Ouest (`x-1`). Le `Look` liste la case du joueur, puis chaque rangée
@@ -136,9 +138,17 @@ drones vivent exactement 1260 unités avec 9 nourritures.
 
 `START_FOOD` (dans `server.h`) fixe la réserve de départ.
 
+### Le Broadcast directionnel
+
+Un cri est entendu par tous les autres drones sous la forme
+`message K, texte`, où `K` indique d'où vient le son **du point de vue de
+celui qui écoute** : `1` devant, `3` à gauche, `5` derrière, `7` à droite,
+les nombres pairs pour les diagonales, et `0` si l'émetteur est sur la
+même case. Le monde étant un tore, le son prend le chemin le plus court.
+
 Reste à implémenter :
 
-- [ ] commandes IA restantes (`Broadcast`, `Eject`, `Fork`, `Incantation`)
+- [ ] commandes IA restantes (`Eject`, `Fork`, `Incantation`)
 - [ ] reste du protocole GUI (`tna`, `sst`, `enw`/`ebo`, `pic`, `seg`...)
 - [ ] client `zappy_ai`
 - [ ] client `zappy_gui`
