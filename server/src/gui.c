@@ -73,7 +73,9 @@ void gui_command(server_t *srv, client_t *c, const char *line)
     } else if (strcmp(line, "sgt") == 0) {
         snprintf(buf, sizeof(buf), "sgt %d\n", srv->freq);
         queue_output(c, buf);
-    } else if (strcmp(line, "mct") == 0)
+    } else if (strcmp(line, "tna") == 0)
+        gui_send_tna(srv, c);
+    else if (strcmp(line, "mct") == 0)
         gui_send_mct(srv, c);
     else if (strncmp(line, "bct", 3) == 0)
         gui_bct(srv, c, line);

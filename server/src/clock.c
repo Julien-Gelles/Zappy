@@ -66,6 +66,9 @@ static uint64_t earliest_deadline(server_t *srv)
         d = client_food_deadline(&srv->clients[i]);
         if (d != 0 && d < next)
             next = d;
+        d = srv->clients[i].incant_end_us;
+        if (d != 0 && d < next)
+            next = d;
     }
     return next;
 }

@@ -47,8 +47,8 @@ void remove_client(server_t *srv, client_t *c)
     char line[32];
 
     if (c->state == STATE_AI) {
-        /* La place se libère dans l'équipe, et les GUI doivent l'apprendre. */
-        srv->team_used[c->team_idx]--;
+        /* La place ne revient PAS : l'œuf a été consommé pour de bon.
+        ** Seul un Fork peut en recréer une. */
         snprintf(line, sizeof(line), "pdi #%d\n", c->id);
         gui_broadcast(srv, line);
     }

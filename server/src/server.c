@@ -52,6 +52,8 @@ int server_init(server_t *srv)
         return (perror("fcntl"), -1);
     if (map_init(srv) == -1)
         return (perror("map_init"), -1);
+    if (eggs_init(srv) == -1)
+        return (perror("eggs_init"), -1);
     srv->next_refill_us = now_us() + units_to_us(srv, REFILL_UNITS);
     return 0;
 }
@@ -128,6 +130,6 @@ void server_cleanup(server_t *srv)
         free(srv->clients[i].team_name);
     }
     free(srv->team_names);
-    free(srv->team_used);
+    free(srv->eggs);
     map_destroy(srv);
 }

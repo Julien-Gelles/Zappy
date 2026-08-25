@@ -19,7 +19,7 @@ static void usage(const char *bin)
         "\t-y height\tworld height (defaut 20)\n"
         "\t-n names\tteam names (au moins une)\n"
         "\t-c clientsNb\tnb of clients per team\n"
-        "\t-f freq\t\treciprocal of time unit (defaut 100)\n",
+        "\t-f freq\t\treciprocal of time unit (defaut 10)\n",
         bin);
 }
 

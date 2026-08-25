@@ -32,6 +32,10 @@ static int action_cost(const char *cmd)
         return COST_OBJECT;
     if (strncmp(cmd, "Broadcast ", 10) == 0)
         return COST_BROADCAST;
+    if (strcmp(cmd, "Fork") == 0)
+        return COST_FORK;
+    if (strcmp(cmd, "Eject") == 0)
+        return COST_EJECT;
     return 0;
 }
 
@@ -73,6 +77,9 @@ void client_run_actions(server_t *srv, client_t *c, uint64_t now)
 {
     char cmd[ACTION_MAX];
 
+    /* Un drone en pleine incantation est fige : ses commandes attendent. */
+    if (c->incant_end_us != 0)
+        return;
     while (c->nb_actions > 0 && c->actions[0].end_us <= now) {
         memcpy(cmd, c->actions[0].cmd, ACTION_MAX);
         action_pop(c);

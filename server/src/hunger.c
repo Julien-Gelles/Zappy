@@ -57,6 +57,7 @@ void tick_players(server_t *srv, uint64_t now)
         c = &srv->clients[i];
         if (c->fd == -1 || c->state != STATE_AI)
             continue;
+        incant_tick(srv, c, now);
         client_run_actions(srv, c, now);
         if (c->fd != -1)
             check_hunger(srv, c, now);
