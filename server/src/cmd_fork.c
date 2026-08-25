@@ -2,11 +2,12 @@
 ** ZAPPY - cmd_fork.c
 ** Fork et Eject : pondre un oeuf, et pousser les autres hors de sa case.
 **
-** Fork (42 unites, soit 0.42 s a f=100 : la commande la plus lente apres
-** l'incantation) pose un oeuf sur la case du drone. Cela n'ajoute pas un
-** joueur : cela ajoute une PLACE, qu'un nouveau client viendra occuper.
+** Fork (42 unites, soit 4.2 s au f par defaut de 10 : la commande la plus
+** lente apres l'incantation) pose un oeuf sur la case du drone. Cela
+** n'ajoute pas un joueur : cela ajoute une PLACE, qu'un nouveau client
+** viendra occuper.
 **
-** Eject (7 unites, 0.07 s a f=100) balaie la case :
+** Eject (7 unites, 0.7 s a f=10) balaie la case :
 **   - tous les AUTRES drones qui s'y trouvent sont pousses d'une case dans
 **     la direction ou regarde l'ejecteur, allies comme ennemis ;
 **   - tous les oeufs qui s'y trouvent sont ecrases.

@@ -18,6 +18,7 @@
 /*
 ** Le temps du jeu se compte en "unites de temps".
 ** Une unite dure 1/f seconde : plus f est grand, plus le jeu va vite.
+** Avec le f par defaut de 10, une unite vaut donc 0.1 s.
 ** Une action qui coute 7 unites prend donc 7/f seconde.
 */
     #define REFILL_UNITS  20   /* les ressources reapparaissent tous les 20 */
@@ -36,7 +37,7 @@
 
     #define MAX_PENDING   10   /* commandes en attente par joueur, au maximum */
     #define ACTION_MAX    256  /* longueur maximale d'une commande stockee */
-    #define START_FOOD    50   /* unites de nourriture au depart */
+    #define START_FOOD     5   /* unites de nourriture au depart */
 
 /*
 ** Toutes les FOOD_UNITS unites de temps, un drone digere une nourriture.
