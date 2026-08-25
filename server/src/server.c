@@ -54,6 +54,7 @@ int server_init(server_t *srv)
         return (perror("map_init"), -1);
     if (eggs_init(srv) == -1)
         return (perror("eggs_init"), -1);
+    console_init(srv);
     srv->next_refill_us = now_us() + units_to_us(srv, REFILL_UNITS);
     return 0;
 }
@@ -71,6 +72,12 @@ static int build_pollfds(server_t *srv, struct pollfd *pfds, client_t **map)
     pfds[n].events = POLLIN;
     map[n] = NULL;
     n++;
+    if (srv->console_fd != -1) {
+        pfds[n].fd = srv->console_fd;
+        pfds[n].events = POLLIN;
+        map[n] = NULL;
+        n++;
+    }
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (srv->clients[i].fd == -1)
             continue;
@@ -86,8 +93,9 @@ static int build_pollfds(server_t *srv, struct pollfd *pfds, client_t **map)
 
 int server_run(server_t *srv)
 {
-    struct pollfd pfds[MAX_CLIENTS + 1];
-    client_t *map[MAX_CLIENTS + 1];
+    /* +2 : la socket d'écoute et l'entrée clavier, en plus des clients. */
+    struct pollfd pfds[MAX_CLIENTS + 2];
+    client_t *map[MAX_CLIENTS + 2];
     int nfds;
     int ready;
 
@@ -108,6 +116,10 @@ int server_run(server_t *srv)
                 accept_client(srv);
                 continue;
             }
+            if (pfds[i].fd == srv->console_fd
+                && (pfds[i].revents & (POLLIN | POLLHUP))
+                && console_read(srv) == -1)
+                srv->console_fd = -1;
             if (map[i] == NULL)
                 continue;
             if (pfds[i].revents & POLLOUT)

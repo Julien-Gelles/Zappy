@@ -35,6 +35,12 @@ static void check_hunger(server_t *srv, client_t *c, uint64_t now)
 {
     if (now < c->food_end_us)
         return;
+    if (srv->no_food) {
+        /* Mode mise au point (/noFood true) : l'horloge continue de
+        ** tourner mais on ne consomme rien et personne ne meurt. */
+        c->food_end_us = now + units_to_us(srv, FOOD_UNITS);
+        return;
+    }
     if (c->inventory[RES_FOOD] <= 0) {
         player_dies(srv, c);
         return;

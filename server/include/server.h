@@ -209,6 +209,16 @@ typedef struct server_s {
     int         next_player_id;  /* compteur pour attribuer les #n aux GUI */
     int         next_incant_id;  /* idem pour identifier les rituels */
     int         game_over;       /* une équipe a gagné : on ne l'annonce qu'une fois */
+
+    /*
+    ** Console d'administration lue au clavier (voir console.c).
+    ** Hors sujet : c'est un outil de mise au point.
+    ** console_fd vaut -1 quand l'entrée standard est fermée.
+    */
+    int         console_fd;
+    char        console_buf[256];
+    size_t      console_len;
+    int         no_food;         /* /noFood true : plus de faim ni de mort */
 } server_t;
 
 /* args.c ------------------------------------------------------------------- */
@@ -289,6 +299,10 @@ void incant_tick(server_t *srv, client_t *c, uint64_t now);
 
 /* victory.c ---------------------------------------------------------------- */
 void player_level_up(server_t *srv, client_t *c);
+
+/* console.c ---------------------------------------------------------------- */
+void console_init(server_t *srv);
+int  console_read(server_t *srv);
 
 /* cmd_inventory.c ---------------------------------------------------------- */
 void cmd_inventory(server_t *srv, client_t *c);

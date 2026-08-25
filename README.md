@@ -49,6 +49,27 @@ et le GUI avec le nom réservé `GRAPHIC` :
 ./zappy_gui -p 4242 -h localhost
 ```
 
+## La console d'administration
+
+Une fois le serveur lancé, on peut taper des commandes directement dans son
+terminal. Ce n'est pas dans le sujet : c'est un outil de mise au point.
+
+| Commande | Effet |
+| -------- | ----- |
+| `/noFood true`  | les drones ne digèrent plus et ne meurent plus de faim |
+| `/noFood false` | retour au fonctionnement normal |
+| `/help`         | rappel des commandes |
+
+C'est surtout pratique pour développer une IA : on la laisse tourner sans
+que ses drones meurent, puis on rebranche la faim pour vérifier qu'elle
+sait se nourrir.
+
+L'entrée clavier rejoint le `poll()` comme n'importe quelle socket, donc le
+serveur continue de dormir tant que personne ne tape rien. Si elle est
+fermée ou redirigée depuis `/dev/null` — serveur lancé par un script — elle
+est retirée de la surveillance dès le premier EOF, sans quoi `poll()` la
+signalerait sans arrêt et la boucle tournerait à vide.
+
 ## Structure du dépôt
 
 ```
@@ -78,6 +99,7 @@ server/src/gui.c          commandes GUI de la carte (msz, sgt, bct, mct)
 server/src/gui_query.c    requêtes GUI sur un joueur (ppo, plv, pin)
 server/src/gui_state.c    état complet poussé à un GUI qui se connecte
 server/src/gui_server.c   sst (unité de temps) et smg (message serveur)
+server/src/console.c      console d'administration au clavier (hors sujet)
 
 ai/src/main.c             stub du client IA (à implémenter)
 gui/src/main.cpp          stub du client GUI (à implémenter)
