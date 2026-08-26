@@ -32,13 +32,13 @@ make re     # fclean + all
 ./zappy_server -p 4242 -x 10 -y 10 -n team1 team2 -c 3 -f 100
 ```
 
-| Option | Signification                                 |
-| ------ | --------------------------------------------- |
-| `-p`   | port d'écoute                                 |
-| `-x`   | largeur de la carte (défaut 20)               |
-| `-y`   | hauteur de la carte (défaut 20)               |
-| `-n`   | noms d'équipes (un ou plusieurs)              |
-| `-c`   | nombre de clients (drones) par équipe         |
+| Option | Signification                                     |
+| ------ | ------------------------------------------------- |
+| `-p`   | port d'écoute                                     |
+| `-x`   | largeur de la carte (défaut 20)                   |
+| `-y`   | hauteur de la carte (défaut 20)                   |
+| `-n`   | noms d'équipes (un ou plusieurs)                  |
+| `-c`   | nombre de clients (drones) par équipe             |
 | `-f`   | fréquence : 1 unité de temps = 1/f s (défaut 100) |
 
 Un client IA se connecte ensuite avec le nom d'une équipe déclarée,
@@ -48,6 +48,27 @@ et le GUI avec le nom réservé `GRAPHIC` :
 ./zappy_ai -p 4242 -n team1 -h localhost
 ./zappy_gui -p 4242 -h localhost
 ```
+
+## La console d'administration
+
+Une fois le serveur lancé, on peut taper des commandes directement dans son
+terminal. Ce n'est pas dans le sujet : c'est un outil de mise au point.
+
+| Commande | Effet |
+| -------- | ----- |
+| `/noFood true`  | les drones ne digèrent plus et ne meurent plus de faim |
+| `/noFood false` | retour au fonctionnement normal |
+| `/help`         | rappel des commandes |
+
+C'est surtout pratique pour développer une IA : on la laisse tourner sans
+que ses drones meurent, puis on rebranche la faim pour vérifier qu'elle
+sait se nourrir.
+
+L'entrée clavier rejoint le `poll()` comme n'importe quelle socket, donc le
+serveur continue de dormir tant que personne ne tape rien. Si elle est
+fermée ou redirigée depuis `/dev/null` — serveur lancé par un script — elle
+est retirée de la surveillance dès le premier EOF, sans quoi `poll()` la
+signalerait sans arrêt et la boucle tournerait à vide.
 
 ## Structure du dépôt
 
@@ -77,6 +98,8 @@ server/src/player.c       naissance d'un drone, messages pnw/ppo/pin
 server/src/gui.c          commandes GUI de la carte (msz, sgt, bct, mct)
 server/src/gui_query.c    requêtes GUI sur un joueur (ppo, plv, pin)
 server/src/gui_state.c    état complet poussé à un GUI qui se connecte
+server/src/gui_server.c   sst (unité de temps) et smg (message serveur)
+server/src/console.c      console d'administration au clavier (hors sujet)
 
 ai/src/main.c             stub du client IA (à implémenter)
 gui/src/main.cpp          stub du client GUI (à implémenter)
@@ -106,6 +129,7 @@ Fait :
 - [x] état complet envoyé à un GUI qui se connecte en cours de partie
 - [x] `Incantation` : conditions, gel des participants, échec sur `Eject`
 - [x] condition de victoire (`seg`) : 6 joueurs d'une équipe au niveau 8
+- [x] **protocole GUI complet**, `sst` et `smg` compris
 
 Les densités ont été relevées sur le serveur de référence, en comparant
 les totaux de `mct` sur plusieurs tailles de carte. La quantité visée est
@@ -125,20 +149,20 @@ Le coût des commandes et le repère de la carte ont été relevés de la même
 façon, en chronométrant le serveur de référence. Une unité de temps vaut
 `1/f` seconde, soit **10 ms** avec le `f` par défaut de 100 :
 
-| Commande                                   | Unités | À `f=100` |
-| ------------------------------------------ | ------ | --------- |
-| `Inventory`                                | 1      | 0,01 s    |
-| `Forward`, `Right`, `Left`                 | 7      | 0,07 s    |
-| `Look`, `Take`, `Set`, `Broadcast`, `Eject`| 7      | 0,07 s    |
-| `Fork`                                     | 42     | 0,42 s    |
-| `Connect_nbr`                              | 0      | immédiat  |
+| Commande                                    | Unités | À `f=100` |
+| ------------------------------------------- | ------ | --------- |
+| `Inventory`                                 | 1      | 0,01 s    |
+| `Forward`, `Right`, `Left`                  | 7      | 0,07 s    |
+| `Look`, `Take`, `Set`, `Broadcast`, `Eject` | 7      | 0,07 s    |
+| `Fork`                                      | 42     | 0,42 s    |
+| `Connect_nbr`                               | 0      | immédiat  |
 
 Les autres durées du jeu, dans la même unité :
 
-| Événement                          | Unités | À `f=100` |
-| ---------------------------------- | ------ | --------- |
-| Réapparition des ressources        | 20     | 0,2 s     |
-| Digestion d'une unité de nourriture| 126    | 1,26 s    |
+| Événement                           | Unités | À `f=100` |
+| ----------------------------------- | ------ | --------- |
+| Réapparition des ressources         | 20     | 0,2 s     |
+| Digestion d'une unité de nourriture | 126    | 1,26 s    |
 
 Orientations : `1` = Nord (`y-1`), `2` = Est (`x+1`), `3` = Sud (`y+1`),
 `4` = Ouest (`x-1`). Le `Look` liste la case du joueur, puis chaque rangée
@@ -204,13 +228,13 @@ nombre de drones du même niveau et un certain nombre de pierres :
 
 | Élévation | Joueurs | linemate | deraumere | sibur | mendiane | phiras | thystame | Durée | À `f=10` |
 | --------- | ------: | -------: | --------: | ----: | -------: | -----: | -------: | ----: | -------: |
-| 1 → 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 60  | 6 s  |
-| 2 → 3 | 2 | 1 | 1 | 1 | 0 | 0 | 0 | 100 | 10 s |
-| 3 → 4 | 2 | 2 | 0 | 1 | 0 | 2 | 0 | 140 | 14 s |
-| 4 → 5 | 4 | 1 | 1 | 2 | 0 | 1 | 0 | 180 | 18 s |
-| 5 → 6 | 4 | 1 | 2 | 1 | 3 | 0 | 0 | 220 | 22 s |
-| 6 → 7 | 6 | 1 | 2 | 3 | 0 | 1 | 0 | 260 | 26 s |
-| 7 → 8 | 6 | 2 | 2 | 2 | 2 | 2 | 1 | 300 | 30 s |
+| 1 → 2     |       1 |        1 |         0 |     0 |        0 |      0 |        0 |    60 |      6 s |
+| 2 → 3     |       2 |        1 |         1 |     1 |        0 |      0 |        0 |   100 |     10 s |
+| 3 → 4     |       2 |        2 |         0 |     1 |        0 |      2 |        0 |   140 |     14 s |
+| 4 → 5     |       4 |        1 |         1 |     2 |        0 |      1 |        0 |   180 |     18 s |
+| 5 → 6     |       4 |        1 |         2 |     1 |        3 |      0 |        0 |   220 |     22 s |
+| 6 → 7     |       6 |        1 |         2 |     3 |        0 |      1 |        0 |   260 |     26 s |
+| 7 → 8     |       6 |        2 |         2 |     2 |        2 |      2 |        1 |   300 |     30 s |
 
 Deux règles du sujet faciles à manquer :
 
@@ -237,13 +261,31 @@ sujet.
 La partie s'arrête quand une équipe compte **6 joueurs au niveau 8** : les
 GUI reçoivent alors `seg <équipe>`.
 
+### Le protocole GUI
+
+Toutes les commandes et tous les événements du document de protocole sont
+implémentés. Ce que le GUI peut demander :
+
+| Commande                       | Réponse                  |
+| ------------------------------ | ------------------------ |
+| `msz`                          | `msz X Y`                |
+| `bct X Y`                      | `bct X Y q0…q6`          |
+| `mct`                          | un `bct` par case        |
+| `tna`                          | un `tna N` par équipe    |
+| `ppo #n` · `plv #n` · `pin #n` | l'état du joueur demandé |
+| `sgt`                          | `sgt T`                  |
+| `sst T`                        | change l'unité de temps  |
+
+Le serveur émet de lui-même `pnw`, `ppo`, `pin`, `pex`, `pbc`, `pic`,
+`pie`, `pfk`, `pdr`, `pgt`, `pdi`, `enw`, `ebo`, `edi`, `seg` et `smg`.
+Une commande inconnue reçoit `suc`, un paramètre invalide `sbp`.
+
 Reste à implémenter :
 
-- [ ] `sst` (changer l'unité de temps depuis le GUI) et `smg` (message serveur)
 - [ ] client `zappy_ai`
 - [ ] client `zappy_gui`
 
-Le serveur est donc complet côté règles du jeu.
+**Le serveur est terminé** : règles du jeu et protocole GUI complets.
 
 ## Licence
 

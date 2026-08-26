@@ -32,7 +32,9 @@ SERVER_SRC = server/src/main.c \
              server/src/player.c \
              server/src/gui.c \
              server/src/gui_query.c \
-             server/src/gui_state.c
+             server/src/gui_state.c \
+             server/src/gui_server.c \
+             server/src/console.c
 SERVER_OBJ = $(SERVER_SRC:.c=.o)
 
 AI_SRC  = ai/src/main.c
